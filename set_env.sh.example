@@ -1,0 +1,11 @@
+#!/bin/bash
+# 设置Cloudflare R2环境变量
+# 复制此文件为set_env.sh并填入您的实际账户信息
+
+export R2_ENDPOINT="https://youraccountid.r2.cloudflarestorage.com"
+export R2_ACCESS_KEY_ID="your_access_key_id"
+export R2_SECRET_ACCESS_KEY="your_secret_access_key"
+export R2_BUCKET_NAME="your_bucket_name"
+export R2_PUBLIC_URL="https://public.yourdomain.com"
+
+echo "已设置R2环境变量!" 
