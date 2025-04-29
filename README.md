@@ -4,7 +4,10 @@
 
 [中文文档](README_CN.md)
 
+
 A tool for downloading, compressing, and re-uploading images in Cloudflare R2 buckets, supporting various image formats and custom paths.
+
+![example](output.png)
 
 ## Features
 
