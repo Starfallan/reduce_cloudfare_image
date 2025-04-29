@@ -35,7 +35,7 @@
 
 1. 克隆仓库:
    ```bash
-   git clone https://github.com/yourusername/r2-image-compression-tool.git
+   git clone https://github.com/zhangchenchen/reduce_cloudfare_image.git
    cd r2-image-compression-tool
    ```
 

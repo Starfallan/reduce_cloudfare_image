@@ -35,7 +35,7 @@ A tool for downloading, compressing, and re-uploading images in Cloudflare R2 bu
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/r2-image-compression-tool.git
+   git clone https://github.com/zhangchenchen/reduce_cloudfare_image.git
    cd r2-image-compression-tool
    ```
 
