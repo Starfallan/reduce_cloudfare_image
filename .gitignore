@@ -66,4 +66,7 @@ temp/
 .idea/
 .vscode/
 *.swp
-*.swo 
+*.swo # pixi environments
+.pixi/*
+!.pixi/config.toml
+.history/

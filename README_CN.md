@@ -6,25 +6,27 @@
 
 一个用于从Cloudflare R2存储桶下载、压缩和重新上传图片的工具，支持多种图片格式和自定义路径。
 
+此仓库为Fork修改版，将原来的保持原格式压缩图片替换为了全部压缩为Avif格式，增加了avif格式的支持。
+再次感谢原作者的付出：[Origin](https://github.com/zhangchenchen/reduce_cloudfare_image)
 
-![example](output.png)
+
 ## 功能特点
 
 - 从R2存储下载图片
-- 支持多种图片格式（PNG, JPEG, WebP, GIF）
-- 根据不同图片格式应用最佳压缩策略
+- 支持多种输入图片格式（PNG, JPEG, WebP, GIF, AVIF）
+- **将所有图片转换为 AVIF 格式以获得最佳压缩效果**
 - 调整大图片尺寸（保持宽高比）
-- 针对不同格式优化压缩：
-  - PNG: 色彩优化和量化
-  - JPEG: 质量调整
-  - WebP: 压缩质量优化
-  - GIF: 适当情况下转换为更高效的格式
-- 将压缩后的图片上传回R2，替换原始图片
+- AVIF 格式优势：
+  - 比 JPEG 压缩率高 50% 以上
+  - 比 WebP 压缩率高 20% 以上
+  - 支持透明度和无损压缩
+  - 现代浏览器广泛支持
+- 将压缩后的图片上传回R2，使用 .avif 扩展名
 - 并行处理多张图片
 - 支持自定义目录前缀和文件匹配模式
 - 包含测试模式，可以预览将处理哪些文件
 - 处理前显示文件列表并请求用户确认
-- 处理完成后生成详细压缩报告
+- 处理完成后生成详细压缩报告,并询问是否删除原来的文件。
 
 ## 安装
 
@@ -44,6 +46,11 @@
 2. 安装所需包:
    ```bash
    pip install -r requirements.txt
+   ```
+
+   另：Pixi可以使用以下命令
+   ```bash
+   pixi install
    ```
 
 3. 设置环境变量:
@@ -82,16 +89,17 @@ python compress_r2_images.py [选项]
 - `--compression-level LEVEL`: PNG压缩级别 (0-9, 默认: 9)
 - `--jpeg-quality QUALITY`: JPEG压缩质量 (0-100, 默认: 85)
 - `--webp-quality QUALITY`: WebP压缩质量 (0-100, 默认: 85)
+- `--avif-quality QUALITY`: AVIF压缩质量 (0-100, 默认: 85, 需要AVIF支持)
 - `--test`: 测试模式 - 只列出将处理的文件，但不实际处理
 
 ### 示例
 
 ```bash
 # 处理themes目录下的所有PNG文件
-python compress_r2_images.py --prefix "themes/" --pattern ".*\.png$"
+python compress_r2_images.py --prefix "2025/07/" --pattern ".*\.png$"
 
 # 测试模式，只显示将处理的文件
-python compress_r2_images.py --test --prefix "themes/"
+python compress_r2_images.py --test --prefix "2025/07/" --pattern ".*\.png$"
 
 # 处理特定主题目录中的所有图片
 python compress_r2_images.py --prefix "themes/steampunk-game-community/" --pattern ".*\.png$"
@@ -131,12 +139,16 @@ Processing images: 100%|██████████████████�
 
 ## 支持的图片格式
 
-脚本支持以下图片格式:
+脚本支持以下**输入**图片格式:
 
-- **PNG (.png)**: 保留透明度，使用优化和色彩量化
-- **JPEG (.jpg, .jpeg)**: 调整质量级别
-- **WebP (.webp)**: 支持透明度，调整质量级别
-- **GIF (.gif)**: 支持透明度，对非动画GIF考虑转换为更高效格式
+- **PNG (.png)**: 保留透明度
+- **JPEG (.jpg, .jpeg)**: 标准有损格式
+- **WebP (.webp)**: 现代有损/无损格式
+- **GIF (.gif)**: 动画和静态图片
+- **AVIF (.avif)**: 现代高效压缩格式
+
+**所有图片都将转换为 AVIF 格式输出**，以实现最佳的压缩效果和质量平衡。
+- **AVIF (.avif)**: 高效压缩格式，支持透明度（需要系统支持AVIF编解码器）
 
 ## 工作原理
 
@@ -144,19 +156,16 @@ Processing images: 100%|██████████████████�
 2. 显示文件列表并请求用户确认
 3. 下载每个图片
 4. 如果图片宽度超过最大宽度，则调整大小
-5. 根据图片格式应用最佳压缩策略:
-   - PNG: 优化设置和色彩量化
-   - JPEG: 调整质量级别
-   - WebP: 优化压缩质量
-   - GIF: 优化或转换为更高效格式
-6. 将压缩后的图片上传回R2，使用相同的键（覆盖原始图片）
+5. **将所有图片转换为 AVIF 格式**，应用质量优化：
+   - 起始质量：可配置（默认 85）
+   - 如果文件仍然过大，逐步降低质量直到符合大小要求
+   - 保持透明度支持
+6. 将压缩后的图片上传回R2，使用 .avif 扩展名
 7. 只有当实现至少5%的大小减少时才上传
 8. 生成详细的压缩报告
 
 ## 注意事项
 
-- 脚本保留PNG和WebP格式的透明度
-- 对于JPEG，非透明图层将转换为RGB模式
 - 运行时间取决于图片数量、大小和网络速度
 - 处理进度通过进度条和日志信息显示
 - 测试模式可帮助您在实际处理前预览将处理的文件
