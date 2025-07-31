@@ -27,9 +27,9 @@ def load_env_file():
                     # Remove quotes if present
                     value = value.strip('"\'')
                     os.environ[key] = value
-        print(f"✓ 已加载环境配置文件: {env_file}")
+        print(f"Loaded environment config file: {env_file}")
     else:
-        print(f"⚠ 未找到 .env 文件: {env_file}")
+        print(f".env file not found: {env_file}")
 
 # Load .env file at startup
 load_env_file()
@@ -48,9 +48,6 @@ R2_PUBLIC_URL = os.environ.get('R2_PUBLIC_URL', '')
 # Compression configuration
 MAX_WIDTH = 1200  # Maximum width in pixels
 MAX_SIZE_MB = 1  # Maximum file size in MB after compression
-PNG_COMPRESSION_LEVEL = 9  # PNG compression level (0-9, 9 being max compression)
-JPEG_QUALITY = 85  # JPEG quality (0-100, higher is better quality)
-WEBP_QUALITY = 85  # WebP quality (0-100, higher is better quality)
 AVIF_QUALITY = 85  # AVIF quality (0-100, higher is better quality)
 
 # Stats tracking
@@ -104,11 +101,11 @@ def list_images(prefix, pattern=None):
     
     image_keys = []
     image_sizes = {}
-    all_files = []  # 用于调试，存储所有文件
-    
-    print(f"\n🔍 调试信息: 扫描 R2 存储桶 '{R2_BUCKET_NAME}' 前缀 '{prefix}'")
-    print(f"📋 匹配模式: {pattern.pattern}")
-    print(f"📁 支持的格式: {list(SUPPORTED_FORMATS.keys())}")
+    all_files = []  # For debug, store all files
+
+    print(f"\n[DEBUG] Scanning R2 bucket '{R2_BUCKET_NAME}' prefix '{prefix}'")
+    print(f"Pattern: {pattern.pattern}")
+    print(f"Supported formats: {list(SUPPORTED_FORMATS.keys())}")
     print("-" * 80)
     
     for page in page_iterator:
@@ -121,28 +118,28 @@ def list_images(prefix, pattern=None):
                 if pattern.match(key):
                     image_keys.append(key)
                     image_sizes[key] = size
-                    print(f"✅ 匹配: {key} ({size/1024:.1f} KB)")
+                    print(f"MATCH: {key} ({size/1024:.1f} KB)")
                 else:
-                    print(f"❌ 跳过: {key} ({size/1024:.1f} KB)")
+                    print(f"SKIP: {key} ({size/1024:.1f} KB)")
     
     print("-" * 80)
-    print(f"📊 扫描统计:")
-    print(f"   总文件数: {len(all_files)}")
-    print(f"   匹配文件数: {len(image_keys)}")
-    print(f"   跳过文件数: {len(all_files) - len(image_keys)}")
+    print(f"[DEBUG] Scan stats:")
+    print(f"   Total files: {len(all_files)}")
+    print(f"   Matched files: {len(image_keys)}")
+    print(f"   Skipped files: {len(all_files) - len(image_keys)}")
     
     if not all_files:
-        print(f"⚠️  在前缀 '{prefix}' 下未找到任何文件")
-        print("💡 建议:")
-        print("   1. 检查前缀路径是否正确")
-        print("   2. 确认存储桶中有文件")
-        print("   3. 尝试使用空前缀 --prefix '' 来列出所有文件")
+        print(f"No files found under prefix '{prefix}'")
+        print("Tips:")
+        print("   1. Check if the prefix path is correct")
+        print("   2. Make sure there are files in the bucket")
+        print("   3. Try using an empty prefix --prefix '' to list all files")
     elif not image_keys:
-        print(f"⚠️  在前缀 '{prefix}' 下找到 {len(all_files)} 个文件，但没有匹配的图片文件")
-        print("💡 建议:")
-        print("   1. 检查文件扩展名是否在支持列表中")
-        print("   2. 尝试使用自定义正则表达式模式 --pattern")
-        print("   3. 检查文件路径结构是否符合默认模式")
+        print(f"Found {len(all_files)} files under prefix '{prefix}', but no matching image files")
+        print("Tips:")
+        print("   1. Check if file extensions are in the supported list")
+        print("   2. Try using a custom regex pattern --pattern")
+        print("   3. Check if file path structure matches the default pattern")
     
     logger.info(f"Found {len(image_keys)} images matching the pattern in '{prefix}'")
     return image_keys, image_sizes
@@ -186,7 +183,7 @@ def compress_image(image_data, key):
         
         # Get original format info for logging
         original_ext = os.path.splitext(key.lower())[1]
-        print(f"  原始格式: {original_ext} → 目标格式: AVIF")
+        print(f"  Original format: {original_ext} -> Target format: AVIF")
         
         # Calculate new dimensions maintaining aspect ratio
         orig_width, orig_height = img.size
@@ -195,7 +192,7 @@ def compress_image(image_data, key):
             new_width = MAX_WIDTH
             new_height = int(orig_height * ratio)
             img = img.resize((new_width, new_height), Image.LANCZOS)
-            print(f"  调整尺寸: {orig_width}x{orig_height} → {new_width}x{new_height}")
+            print(f"  Resize: {orig_width}x{orig_height} -> {new_width}x{new_height}")
         
         # Prepare compressed image - always use AVIF
         output = BytesIO()
@@ -213,7 +210,7 @@ def compress_image(image_data, key):
             img.save(output, format='AVIF', quality=quality)
             current_size_mb = output.tell() / (1024 * 1024)
             
-        print(f"  最终AVIF质量: {quality}")
+        print(f"  Final AVIF quality: {quality}")
         
         output.seek(0)
         return output, 'image/avif'
@@ -303,7 +300,7 @@ def process_image(key, original_size=None):
 
 def display_image_list(image_keys, image_sizes):
     """Display the list of images that will be processed."""
-    print("\n将处理以下图片文件:")
+    print("\nFiles to be processed:")
     
     # Prepare data for table
     data = []
@@ -325,20 +322,20 @@ def display_image_list(image_keys, image_sizes):
     
     # Add total row
     data.append([
-        "总计",
-        f"{len(image_keys)} 文件",
+        "Total",
+        f"{len(image_keys)} files",
         f"{total_size/1024:.1f} KB",
         f"{total_size/(1024*1024):.2f} MB"
     ])
     
     # Print table
-    print(tabulate.tabulate(data, headers=["文件路径", "格式", "大小(KB)", "大小(MB)"], tablefmt="grid"))
+    print(tabulate.tabulate(data, headers=["File Path", "Format", "Size(KB)", "Size(MB)"], tablefmt="grid"))
     
     return total_size
 
 def generate_compression_report(stats):
     """Generate a detailed compression report from stats."""
-    print("\n图片压缩结果报告:")
+    print("\nImage Compression Report:")
     
     # Prepare data for table
     report_data = []
@@ -367,7 +364,7 @@ def generate_compression_report(stats):
     # Add summary rows
     total_ratio = (total_saved / total_original * 100) if total_original > 0 else 0
     report_data.append([
-        "总计",
+        "Total",
         f"{total_original/1024:.1f} KB",
         f"{total_compressed/1024:.1f} KB",
         f"{total_saved/1024:.1f} KB",
@@ -381,7 +378,7 @@ def generate_compression_report(stats):
     mb_saved = total_saved / (1024 * 1024)
     
     report_data.append([
-        "总计(MB)",
+        "Total(MB)",
         f"{mb_original:.2f} MB",
         f"{mb_compressed:.2f} MB",
         f"{mb_saved:.2f} MB",
@@ -392,15 +389,15 @@ def generate_compression_report(stats):
     # Print table
     print(tabulate.tabulate(
         report_data, 
-        headers=["文件", "原始大小", "压缩后大小", "节省空间", "压缩率", "处理时间"],
+        headers=["File", "Original Size", "Compressed Size", "Space Saved", "Compression Ratio", "Time"],
         tablefmt="grid"
     ))
     
     # Print summary
     file_count = len(stats)
-    print(f"\n共处理 {file_count} 个文件")
-    print(f"总节省空间: {mb_saved:.2f} MB")
-    print(f"平均压缩率: {total_ratio:.1f}%")
+    print(f"\nProcessed {file_count} files")
+    print(f"Total space saved: {mb_saved:.2f} MB")
+    print(f"Average compression ratio: {total_ratio:.1f}%")
 
 def main(prefix, pattern=None, max_workers=5):
     """Main function to process all images.
@@ -428,15 +425,15 @@ def main(prefix, pattern=None, max_workers=5):
     total_size = display_image_list(image_keys, image_sizes)
     
     # Ask for user confirmation
-    confirm = input(f"\n将处理 {len(image_keys)} 个文件，总大小 {total_size/(1024*1024):.2f} MB。确认继续？(y/n): ")
+    confirm = input(f"\nWill process {len(image_keys)} files, total size {total_size/(1024*1024):.2f} MB. Continue? (y/n): ")
     if confirm.lower() != 'y':
-        print("用户取消操作")
+        print("Operation cancelled by user.")
         return
     
     # Process images in parallel
     success_count = 0
     error_count = 0
-    files_to_delete = []  # 收集需要删除的原始文件
+    files_to_delete = []  # Collect original files to delete
     
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         future_to_key = {
@@ -454,7 +451,7 @@ def main(prefix, pattern=None, max_workers=5):
                     success_count += 1
                     if compressed_size > 0:
                         compression_stats[key].append((original_size, compressed_size, ratio, process_time))
-                    # 收集需要删除的原始文件
+                    # Collect original files to delete
                     if original_key_to_delete:
                         files_to_delete.append(original_key_to_delete)
                 else:
@@ -470,38 +467,33 @@ def main(prefix, pattern=None, max_workers=5):
     
     # Handle deletion of original files
     if files_to_delete:
-        print(f"\n🗑️  原始文件清理")
-        print(f"以下 {len(files_to_delete)} 个原始文件已被转换为 AVIF 格式，可以删除以节省存储空间:")
+        print(f"\nOriginal file cleanup")
+        print(f"The following {len(files_to_delete)} original files have been converted to AVIF and can be deleted to save storage:")
         print("-" * 80)
-        
         total_original_size = 0
         for file_key in files_to_delete:
             size = image_sizes.get(file_key, 0)
             total_original_size += size
-            print(f"  📄 {file_key} ({size/1024:.1f} KB)")
-        
+            print(f"  {file_key} ({size/1024:.1f} KB)")
         print("-" * 80)
-        print(f"💾 总计可节省存储空间: {total_original_size/1024:.1f} KB ({total_original_size/(1024*1024):.2f} MB)")
-        
-        confirm_delete = input(f"\n❓ 是否删除这些原始文件？(y/n): ")
+        print(f"Total potential storage saved: {total_original_size/1024:.1f} KB ({total_original_size/(1024*1024):.2f} MB)")
+        confirm_delete = input(f"\nDelete these original files? (y/n): ")
         if confirm_delete.lower() == 'y':
             deleted_count = 0
             failed_count = 0
-            
-            print("\n🧹 正在删除原始文件...")
+            print("\nDeleting original files...")
             for file_key in tqdm(files_to_delete, desc="Deleting original files"):
                 if delete_original_file(file_key):
                     deleted_count += 1
                 else:
                     failed_count += 1
-            
-            print(f"\n✅ 删除完成: {deleted_count} 个文件删除成功, {failed_count} 个失败")
+            print(f"\nDelete complete: {deleted_count} files deleted, {failed_count} failed")
             if deleted_count > 0:
-                print(f"💰 节省存储空间: {total_original_size/(1024*1024):.2f} MB")
+                print(f"Storage saved: {total_original_size/(1024*1024):.2f} MB")
         else:
-            print("⏭️  跳过删除，原始文件保留")
+            print("Skipped deletion, original files retained.")
     else:
-        print("\n🎯 所有处理的文件都已经是 AVIF 格式，无需删除原始文件")
+        print("\nAll processed files are already AVIF, no original files to delete.")
 
 if __name__ == "__main__":
     import argparse
@@ -526,12 +518,6 @@ if __name__ == "__main__":
                       help="Maximum width in pixels (default: 1200)")
     parser.add_argument("--max-size", type=float, default=1.0, 
                       help="Maximum file size in MB (default: 1.0)")
-    parser.add_argument("--compression-level", type=int, default=9, 
-                      help="PNG compression level (0-9, default: 9)")
-    parser.add_argument("--jpeg-quality", type=int, default=85,
-                      help="JPEG compression quality (0-100, default: 85)")
-    parser.add_argument("--webp-quality", type=int, default=85,
-                      help="WebP compression quality (0-100, default: 85)")
     parser.add_argument("--avif-quality", type=int, default=85,
                       help="AVIF compression quality (0-100, default: 85)")
     parser.add_argument("--test", action="store_true", 
@@ -542,9 +528,6 @@ if __name__ == "__main__":
     # Update global configuration
     MAX_WIDTH = args.max_width
     MAX_SIZE_MB = args.max_size
-    PNG_COMPRESSION_LEVEL = args.compression_level
-    JPEG_QUALITY = args.jpeg_quality
-    WEBP_QUALITY = args.webp_quality
     AVIF_QUALITY = args.avif_quality
     
     # Test mode - just list the files that would be processed

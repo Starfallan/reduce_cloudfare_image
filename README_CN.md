@@ -86,10 +86,7 @@ python compress_r2_images.py [选项]
 - `--workers NUMBER`: 并行处理的工作线程数 (默认: 5)
 - `--max-width PIXELS`: 调整图片后的最大宽度，单位像素 (默认: 1200)
 - `--max-size SIZE_MB`: 目标最大文件大小，单位MB (默认: 1.0)
-- `--compression-level LEVEL`: PNG压缩级别 (0-9, 默认: 9)
-- `--jpeg-quality QUALITY`: JPEG压缩质量 (0-100, 默认: 85)
-- `--webp-quality QUALITY`: WebP压缩质量 (0-100, 默认: 85)
-- `--avif-quality QUALITY`: AVIF压缩质量 (0-100, 默认: 85, 需要AVIF支持)
+- `--avif-quality QUALITY`: AVIF压缩质量 (0-100, 默认: 85)
 - `--test`: 测试模式 - 只列出将处理的文件，但不实际处理
 
 ### 示例
